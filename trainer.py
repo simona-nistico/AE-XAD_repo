@@ -7,8 +7,8 @@ from tqdm import tqdm
 import numpy as np
 
 from AE_architectures import Shallow_Autoencoder, Deep_Autoencoder, Conv_Autoencoder, PCA_Autoencoder, Conv_Deep_Autoencoder, Conv_Autoencoder_f2
-from aexad_dataloaders.dataset import CustomAD
-from aexad_dataloaders.mvtec_dataset import MvtecAD
+from datasets.custom import CustomAD
+from datasets.mvtec import MvtecAD
 from loss import AEXAD_loss
 
 class Trainer:
