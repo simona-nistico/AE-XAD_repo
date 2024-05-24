@@ -8,15 +8,46 @@ Dataset classes are used to load the train and test datasets for model training 
   * **MvtecAD**, recommended for images greater than $448 \times 448$, in this class the images are reshaped to $448 \times 448$
 
 Both classes accept channel-first RGB images, images, labels and ground truth that need to be stored in ndarrays saved in the same path. 
-An example of how to arrange data can be found in **tools.create_dataset.mvtec**.
+An example of how to arrange data can be found in **tools.create_dataset.mvtec** while the method **tools.create_dataset.mvtec** provides a function that can work with every dataset organized according to the following folder structure:
+
+```
+path
+│   
+└───train
+│   │
+│   └───good
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
+│   
+└───test
+│   │
+│   └───good
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
+│   │
+│   └───anomaly_type_1
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
+|   ...
+│   │
+│   └───anomaly_type_n
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
+
+```
+
 To insert a new dataset class it is sufficient to include a new class in the dataset package extending **torch.utils.data.Dataset**
 
 ## Networks
 Different network architectures are available:
- *  **shallow** - both the encoder and the decoder are one-layered networks. It works with flattenized input which is mapped to a spece of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *latent_dim*
- *  **deep** - both the encoder and the decoder are two-layered networks. It works with flattenized input which is mapped to a spece of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *intermediate_dim*, *latent_dim*
- *  **conv** - convolutional neural network with two image scale down steps. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
- *  **conv_deep** - convolutional neural network with two image scale down steps. Differently from the latter one, it uses $(5 \times 5)$ filters instead of $(3 \times 3)$. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
+ *  **shallow** - both the encoder and the decoder are one-layered networks. It works with flattened input which is mapped to a space of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *latent_dim*
+ *  **deep** - both the encoder and the decoder are two-layered networks. It works with flattened input which is mapped to a space of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *intermediate_dim*, *latent_dim*
+ *  **conv** - convolutional neural network with two image scale-down steps. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
+ *  **conv_deep** - convolutional neural network with two image scale-down steps. Differently from the latter one, it uses $(5 \times 5)$ filters instead of $(3 \times 3)$. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
  *  **pca** - As **shallow** but without bias. Requires: *dim*, *flat_dim*, *latent_dim*
 
 
@@ -25,12 +56,12 @@ Different network architectures are available:
 *latent_dim* represents the dimension of the latent space.
 *intermediate_dim* intermediate dimention between *flat_dim* and *latent_dim*. it is recommended that its value is major than *latent_dim* and minor then *flat_dim*.
 
-The recomended network for the mvtec dataset is the **conv_deep** one.
+The recommended network for the mvtec dataset is the **conv_deep** one.
 
 ## Trainer
 
-The **Trainer** class is devoted to taking care of inizializing and network and carrying out its training. It allows also to extracts the heatmaps, the outlierness scores and the reconstructed images of the the considered test set.
-To perform the inizialization the following code can be used:
+The **Trainer** class is devoted to taking care of initializing and network and carrying out its training. It allows also to extracts the heatmaps, the outlierness scores and the reconstructed images of the considered test set.
+To perform the initialization the following code can be used:
 
 ```
 trainer = Trainer(latent_dim, lambda_p, lambda_s, f, path, AE_type, batch_size=None, silent=False, use_cuda=True,
@@ -38,19 +69,19 @@ trainer = Trainer(latent_dim, lambda_p, lambda_s, f, path, AE_type, batch_size=N
 ```
 
 where:
- * *lambda_p* is the anomalous pixels weight, when equal to None, is inizialized according to the number of anomalous pixels
- * *lambda_s* is the anomalous samples weight, when equal to None, is inizialized according to the number of anomalous samples
- * *f* is the function used to map the anomalous samples, the recomended one is `lambda x: torch.where(x>0.5, 0., 1.)`
- * *path* is the path in which the npy files of the dataset are stored
+ * *lambda_p* is the weight of the anomalous pixels, when equal to None, is initialized according to the number of anomalous pixels
+ * *lambda_s* is the weight of the anomalous samples, when equal to None, is initialized according to the number of anomalous samples
+ * *f* is the function used to map the anomalous samples, the recommended one is `lambda x: torch.where(x>0.5, 0., 1.)`
+ * *path* is the path in which the .npy files of the dataset are stored
  * *AE_type* is the type of architecture to use
- * *batch_size* is the naumber of samples to include into a batch, if None it is set equal to $1$, defaults to None
+ * *batch_size* is the number of samples to include into a batch, if None it is set equal to $1$, defaults to None
  * *silent* if true, training information are not displayed, defaults to False
- * *use_cuda* if True, the network use the cuda memory for the training
+ * *use_cuda* if True, the network uses the cuda memory for the training
  * *loss* the loss to use, possible values are 'aexad' and 'mse', it defaults to 'aexad'
  * *save_intermediate* if True, it saves model weights every $100$ epochs
  * *dataset* the name of the dataset to use, defaults to 'mvtec'
 
-It follows an example with the recomended parameters:
+It follows an example with the recommended parameters:
 
 ```
 trainer = Trainer(latent_dim=None, lambda_p=None, lambda_s=None, f=lambda x: torch.where(x>0.5, 0., 1.), path=path, AE_type='conv_deep', batch_size=16, silent=False, use_cuda=True,
