@@ -42,7 +42,7 @@ path
 
 To insert a new dataset class it is sufficient to include a new class in the dataset package extending **torch.utils.data.Dataset**
 
-## Networks
+## Network
 Different network architectures are available:
  *  **shallow** - both the encoder and the decoder are one-layered networks. It works with flattened input which is mapped to a space of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *latent_dim*
  *  **deep** - both the encoder and the decoder are two-layered networks. It works with flattened input which is mapped to a space of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *intermediate_dim*, *latent_dim*
