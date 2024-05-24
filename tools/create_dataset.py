@@ -1,7 +1,6 @@
 import os
 
 import PIL.Image as Image
-from tensorflow.keras.datasets import mnist,fashion_mnist,cifar10
 import numpy as np
 
 def mvtec(cl, path, n_anom_per_cls, seed=None):
