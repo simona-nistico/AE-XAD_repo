@@ -1,6 +1,6 @@
 # AE-XAD repo
 
-This repository contains the code of the AE-XAD method (authored by Fabrizio Angiulli, Fabio Fassetti, Luca Ferraggina and Simona Nisticò). 
+This repository contains the code of the AE-XAD method (authored by Fabrizio Angiulli, Fabio Fassetti, Luca Ferragina and Simona Nisticò). 
 
 ## Dataset
 Dataset classes are used to load the train and test datasets for model training and evaluation. In the dataset package two classes are contained:
