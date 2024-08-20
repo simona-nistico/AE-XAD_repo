@@ -116,7 +116,7 @@ def extract_dataset(path, n_anom_per_cls, seed=None):
     f_path = os.path.join(path, 'train', 'good')
     normal_files_tr = os.listdir(f_path)
     for file in normal_files_tr:
-        if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:]:
+        if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:] or 'bmp' in file[-3:]:
             image = np.array(Image.open(os.path.join(f_path, file)).convert('RGB'))
             X_train.append(image)
             GT_train.append(np.zeros_like(image, dtype=np.uint8))
@@ -125,7 +125,7 @@ def extract_dataset(path, n_anom_per_cls, seed=None):
     f_path = os.path.join(path, 'test', 'good')
     normal_files_te = os.listdir(f_path)
     for file in normal_files_te:
-        if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:]:
+        if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:] or 'bmp' in file[-3:]:
             image = np.array(Image.open(os.path.join(f_path, file)).convert('RGB'))
             X_test.append(image)
             GT_test.append(np.zeros_like(image, dtype=np.uint8))
@@ -142,15 +142,15 @@ def extract_dataset(path, n_anom_per_cls, seed=None):
         # Train
         for file in outlier_file[idxs[: n_anom_per_cls]]:
             print(file)
-            if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:]:
+            if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:] or 'bmp' in file[-3:]:
                 X_train.append(np.array(Image.open(os.path.join(path, 'test/' + cl_a + '/' + file)).convert('RGB')))
-                GT_train.append(np.array(Image.open(os.path.join(path, 'ground_truth/' + cl_a + '/' + file).replace('.png', '_mask.png')).convert('RGB')))
+                GT_train.append(np.array(Image.open(os.path.join(path, 'ground_truth/' + cl_a + '/' + file).replace(f'.{file[-3:]}', '.png')).convert('RGB')))
 
         # Test
         for file in outlier_file[idxs[n_anom_per_cls:]]:
-            if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:]:
+            if 'png' in file[-3:] or 'PNG' in file[-3:] or 'jpg' in file[-3:] or 'npy' in file[-3:] or 'bmp' in file[-3:]:
                 X_test.append(np.array(Image.open(os.path.join(path, 'test/' + cl_a + '/' + file)).convert('RGB')))
-                GT_test.append(np.array(Image.open(os.path.join(path, 'ground_truth/' + cl_a + '/' + file).replace('.png', '_mask.png')).convert('RGB')))
+                GT_test.append(np.array(Image.open(os.path.join(path, 'ground_truth/' + cl_a + '/' + file).replace(f'.{file[-3:]}', '.png')).convert('RGB')))
 
     print('GT ', len(GT_train))
     X_train = np.array(X_train).astype(np.uint8)
@@ -170,7 +170,7 @@ def extract_dataset(path, n_anom_per_cls, seed=None):
     Y_test = np.zeros(X_test.shape[0])
     Y_test[len(normal_files_te): ] = 1
 
-    print(Y_train.sum())
-    print(Y_test.sum())
+    print(f'Training anomalies: {Y_train.sum()}')
+    print(f'Test anomalies: {Y_test.sum()}')
 
     return X_train, Y_train, X_test, Y_test, GT_train, GT_test

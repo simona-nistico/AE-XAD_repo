@@ -3,14 +3,16 @@ import PIL.Image as Image
 import numpy as np
 import os
 import torch
+import random
 from torch.utils.data import Dataset
 
 import torchvision.transforms as transforms
+import torchvision.transforms.functional as TF
 
 from datasets.custom import CustomAD
 
 
-class MvtecAD(Dataset):
+class AugmentedAD(Dataset):
     '''
     Data loader for generic RGB datasets, this data loader supposes to have 3 files
         - X_<split>.npy containing (3 x height x width) images, <split> is supposed to be 'train' or 'test'
@@ -22,7 +24,7 @@ class MvtecAD(Dataset):
         :param path: str, path to the tree files containing the dataset
         :param train: bool, if True the dataloader loads the train dataset, it loads the test set otherwise, default True
         '''
-        super(MvtecAD).__init__()
+        super(AugmentedAD).__init__()
 
         self.train = train
         self.seed = seed
@@ -61,21 +63,27 @@ class MvtecAD(Dataset):
         Returns one of the samples of the dataset
         :param index: index of the sample to return
         '''
-        image = self.images[index]
-        image_label = self.gt[index]
+        image = self.transform(self.images[index])
+        image_label = self.transform(self.gt[index])
 
-        sample = {'image': self.transform(image) / 255.0, 'label': self.labels[index],
-                  'gt_label': self.transform(image_label)/ 255.0}
+        # Data augmentation on the flight
+        if self.train and random.uniform(0, 1) > 0.2:
+            alpha = random.randint(0, 5)
+            image = TF.rotate(image, angle=alpha * 90.)
+            image_label = TF.rotate(image_label, angle=alpha * 90.)
+
+        sample = {'image': image / 255.0, 'label': self.labels[index],
+                  'gt_label': image_label / 255.0}
         return sample
 
-class MvtecAD_AE(Dataset):
+class AugmentedAD_AE(Dataset):
     '''
     Data loader for generic RGB datasets tailored to autoencoder, this data loader supposes to have 2 files
         - X_<split>.npy containing (3 x height x width) images, <split> is supposed to be 'train' or 'test', anomalous images will be ignored
         - Y_<split>.npy containing the labels, <split> is supposed to be 'train' or 'test', labels are used only to filter data
     '''
     def __init__(self, path, train=True):
-        super(CustomAD).__init__()
+        super(AugmentedAD).__init__()
         self.train = train
         self.dim = (3, 448, 448)
 

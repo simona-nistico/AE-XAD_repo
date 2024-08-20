@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from tools.create_dataset import square, square_diff
+import warn
+from scipy.ndimage import gaussian_filter
 
 
 def plot_image(image, cmap='gray'):
@@ -58,3 +59,36 @@ def plot_results(X, GT, htmaps, ids):
         plt.axis(False)
         plt.imshow(GT[ids[i]][0], cmap='jet')
     plt.show()
+
+
+def rad_from_lines(gt, d_thres=3):
+    nc = gt.shape[1]
+    gtrow = gt.cumsum(axis=1) * gt
+    drow = gtrow[np.where(gtrow[:, 0:nc - 1] > gtrow[:, 1:nc])]
+    drow = np.concatenate((drow, gtrow[gtrow[:, nc - 1] > 0, nc - 1]))
+    drow = drow[drow > d_thres]
+    rrow = 0.5 * drow.mean()
+    nr = gt.shape[0]
+    gtcol = gt.cumsum(axis=0) * gt
+    dcol = gtcol[np.where(gtcol[0:nr - 1, :] > gtcol[1:nr, :])]
+    dcol = np.concatenate((dcol, gtcol[nr - 1, gtcol[nr - 1, :] > 0]))
+    dcol = dcol[dcol > d_thres]
+    rcol = 0.5 * dcol.mean()
+    return min(rcol, rrow)
+
+
+def get_filter_sigma(ht, thres=0.5, scale=0.25):
+    if ht.max() > 1:
+        warn.warn('Error: heatmap not in [0,1]')
+    binht = np.where(ht >= thres, 1, 0)
+    rad = rad_from_lines(binht)
+    return max(rad * scale, 1)
+
+
+def blurred_htmaps(hts, thres=0.5, scale=0.25):
+    hts_b = np.empty_like(hts)
+    for i in range(hts.shape[0]):
+        sigma = get_filter_sigma(hts[i], thres=thres, scale=scale)
+        hts_b[i] = gaussian_filter(hts[i], sigma=sigma)
+
+    return hts_b

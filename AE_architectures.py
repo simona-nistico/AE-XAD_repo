@@ -102,6 +102,69 @@ class Conv_Deep_Autoencoder(nn.Module):
         decoded = self.decoder(encoded)
         return decoded
 
+class Conv_Deep_Autoencoder_v2(nn.Module):
+    def __init__(self, dim):
+        super(Conv_Deep_Autoencoder_v2, self).__init__()
+        self.dim = np.array(dim)
+        print(dim)
+
+        layers = []
+
+        layers.append(nn.Conv2d(dim[0], 16, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(16))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(16, 16, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(16))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(16, 32, (6, 6), stride=4, padding=1))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+
+        layers.append(nn.Conv2d(32, 32, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(32, 32, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(32, 128, (6, 6), stride=4, padding=1))
+        layers.append(nn.BatchNorm2d(128))
+        layers.append(nn.LeakyReLU())
+
+
+
+        self.encoder = nn.Sequential(*layers)
+
+        layers = []
+
+        layers.append(nn.ConvTranspose2d(128, 32, (6, 6), stride=4, padding=1))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(32, 32, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(32, 32, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(32))
+        layers.append(nn.LeakyReLU())
+
+        layers.append(nn.ConvTranspose2d(32, 16, (6, 6), stride=4, padding=1))
+        layers.append(nn.BatchNorm2d(16))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(16, 16, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(16))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(16, 16, (5, 5), stride=1, padding=2))
+        layers.append(nn.BatchNorm2d(16))
+        layers.append(nn.LeakyReLU())
+        layers.append(nn.Conv2d(16, dim[0], (3, 3), stride=1, padding=1))
+        layers.append(nn.Sigmoid())
+
+        self.decoder = nn.Sequential(*layers)
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded
+
 class Conv_Autoencoder(nn.Module):
     def __init__(self, dim):
         super(Conv_Autoencoder, self).__init__()

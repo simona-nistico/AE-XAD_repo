@@ -6,10 +6,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
 
-from AE_architectures import Shallow_Autoencoder, Deep_Autoencoder, Conv_Autoencoder, PCA_Autoencoder, Conv_Deep_Autoencoder, Conv_Autoencoder_f2
+from AE_architectures import Shallow_Autoencoder, Deep_Autoencoder, Conv_Autoencoder, PCA_Autoencoder, \
+    Conv_Deep_Autoencoder, Conv_Autoencoder_f2, Conv_Deep_Autoencoder_v2
 from datasets.custom import CustomAD
 from datasets.mvtec import MvtecAD
-from loss import AEXAD_loss
+from datasets.augmented import AugmentedAD
+from loss import AEXAD_loss, AEXAD_loss_weighted
 
 class Trainer:
     def __init__(self, latent_dim, lambda_p, lambda_s, f, path, AE_type, batch_size=None, silent=False, use_cuda=True,
@@ -33,14 +35,22 @@ class Trainer:
         if dataset == 'mnist' or dataset == 'fmnist':
             self.train_loader = DataLoader(CustomAD(path, train=True), batch_size=batch_size, shuffle=True)
             self.test_loader = DataLoader(CustomAD(path, train=False), batch_size=batch_size, shuffle=False)
-        else:
+        elif dataset == 'mvtec':
             self.train_loader = DataLoader(MvtecAD(path, train=True), batch_size=batch_size, shuffle=True)
             self.test_loader = DataLoader(MvtecAD(path, train=False), batch_size=batch_size, shuffle=False)
+        else:
+            print(dataset)
+            ds = AugmentedAD(path, train=True)
+            weights = np.where(ds.labels == 1, 0.6, 0.4)
+            sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, num_samples=len(ds.labels))
+            self.train_loader = DataLoader(ds, batch_size=batch_size, sampler=sampler)
+            self.test_loader = DataLoader(AugmentedAD(path, train=False), batch_size=batch_size, shuffle=False)
 
         self.save_intermediate = save_intermediate
 
         if lambda_s is None:
             lambda_s = len(self.train_loader.dataset) / np.sum(self.train_loader.dataset.labels)
+            print(lambda_s)
 
         self.cuda = use_cuda and torch.cuda.is_available()
 
@@ -58,6 +68,9 @@ class Trainer:
         elif AE_type == 'conv_deep':
             self.model = Conv_Deep_Autoencoder(self.train_loader.dataset.dim)
 
+        elif AE_type == 'conv_deep_v2':
+            self.model = Conv_Deep_Autoencoder_v2(self.train_loader.dataset.dim)
+
         elif AE_type == 'conv_f2':
             self.model = Conv_Autoencoder_f2(self.train_loader.dataset.dim)
 
@@ -71,6 +84,8 @@ class Trainer:
         self.loss = loss
         if loss == 'aexad':
             self.criterion = AEXAD_loss(lambda_p, lambda_s, f, self.cuda)
+        elif loss == 'aexad_norm':
+            self.criterion = AEXAD_loss_weighted(lambda_p, lambda_s, f, self.cuda)
         elif loss == 'mse':
             self.criterion = nn.MSELoss()
 
@@ -145,10 +160,17 @@ class Trainer:
             name = 'model'
         elif isinstance(self.model, Conv_Deep_Autoencoder):
             name = 'model_conv_deep'
+        elif isinstance(self.model, Conv_Deep_Autoencoder_v2):
+            name = 'model_conv_deep_v2'
 
         self.model.train()
         for epoch in range(epochs):
             train_loss = 0.0
+            train_loss_n = 0.0
+            train_loss_a = 0.0
+            na = 0
+            nn = 0
+            ns = 0
             tbar = tqdm(self.train_loader, disable=self.silent)
             for i, sample in enumerate(tbar):
                 image, label, gt_label = sample['image'], sample['label'], sample['gt_label']
@@ -161,7 +183,12 @@ class Trainer:
                 if self.loss == 'mse':
                     loss = self.criterion(output, image)
                 else:
-                    loss = self.criterion(output, image, gt_label, label)
+                    loss, loss_n, loss_a = self.criterion(output, image, gt_label, label)
+                    train_loss_n += loss_n.item()
+                    train_loss_a += loss_a.item()
+                    na += label.sum()
+                    nn += image.shape[0] - na
+                ns += 1
                 self.optimizer.zero_grad()
                 loss.backward()
 
@@ -169,7 +196,11 @@ class Trainer:
 
                 train_loss += loss.item()
                 # In futuro magari inseriremo delle metriche
-                tbar.set_description('Epoch:%d, Train loss: %.3f' % (epoch, train_loss / (i + 1)))
+
+                if self.loss == 'mse':
+                    tbar.set_description('Epoch:%d, Train loss: %.3f' % (epoch, train_loss / ns))
+                else:
+                    tbar.set_description('Epoch:%d, Train loss: %.3f, Normal loss: %.3f, Anom loss: %3f' % (epoch, train_loss / ns, train_loss_n / nn, train_loss_a / na))
 
             if self.save_intermediate and (epoch+1)%100 == 0:
                 torch.save(self.model.state_dict(), os.path.join(save_path, f'{self.loss}_{name}_{epoch+1}.pt'))
