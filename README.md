@@ -37,6 +37,19 @@ path
 │       │   img1.jpg(/.png/.npy)
 │       │   img2.jpg(/.png/.npy)
 │       │   ...
+│ 
+└───ground_truth
+│   │
+│   └───anomaly_type_1
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
+|   ...
+│   │
+│   └───anomaly_type_n
+│       │   img1.jpg(/.png/.npy)
+│       │   img2.jpg(/.png/.npy)
+│       │   ...
 
 ```
 
@@ -48,6 +61,7 @@ Different network architectures are available:
  *  **deep** - both the encoder and the decoder are two-layered networks. It works with flattened input which is mapped to a space of dimension *flat_dim*. Requires: *dim*, *flat_dim*, *intermediate_dim*, *latent_dim*
  *  **conv** - convolutional neural network with two image scale-down steps. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
  *  **conv_deep** - convolutional neural network with two image scale-down steps. Differently from the latter one, it uses $(5 \times 5)$ filters instead of $(3 \times 3)$. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
+ *  **conv_deep_v2** - convolutional neural network with two image scale-down steps. Differently from the latter, the scale-down and scale-up operations are performed through convolutions and transposed convolution, respectively. Works with $(3 \times H \times W)$ or $(1 \times H \times W)$ images. Requires: *dim*
  *  **pca** - As **shallow** but without bias. Requires: *dim*, *flat_dim*, *latent_dim*
 
 
@@ -56,7 +70,7 @@ Different network architectures are available:
 *latent_dim* represents the dimension of the latent space.
 *intermediate_dim* intermediate dimention between *flat_dim* and *latent_dim*. it is recommended that its value is major than *latent_dim* and minor then *flat_dim*.
 
-The recommended network for the mvtec dataset is the **conv_deep** one.
+The recommended network for the mvtec dataset is the **conv_deep** one, while, for BTAD data sets the **conv_deep_v2** network has been used.
 
 ## Trainer
 
