@@ -70,7 +70,7 @@ Different network architectures are available:
 *latent_dim* represents the dimension of the latent space.
 *intermediate_dim* intermediate dimention between *flat_dim* and *latent_dim*. it is recommended that its value is major than *latent_dim* and minor then *flat_dim*.
 
-The recommended network for the mvtec dataset is the **conv_deep** one.
+The recommended network for the mvtec dataset is the **conv_deep** one, while, for BTAD data sets the **conv_deep_v2** network has been used.
 
 ## Trainer
 
